@@ -1,4 +1,5 @@
 import contextlib
+import json
 import logging
 import os
 import sys
@@ -102,15 +103,21 @@ def tree(path):
         tree = get_tree(zk=zk, path=ZooPath("/"), follow=path)
         raw, stat = zk.get(path.full)
         meta = {k: getattr(stat, k) for k in ZNODESTAT_ATTR}
-        # TODO: add JSON parsed version
+        parsed = {"Raw": raw}
+        default_format = "Raw"
+        try:
+            parsed["JSON"] = json.dumps(json.loads(raw), indent=2)
+            default_format = "JSON"
+        except json.JSONDecodeError:
+            pass
 
     return render_template(
         'tree.html',
         zk_hosts=app.config.get("ZK_HOSTS", ZK_HOSTS_DEFAULT),
         path=path,
         tree=tree,
-        raw=raw,
-        meta=meta
+        parsed=parsed, default_format=default_format,
+        meta=meta,
     )
 
 
