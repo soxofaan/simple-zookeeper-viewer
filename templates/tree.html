@@ -20,7 +20,7 @@
             href="{{ url_for("tree", path=node.path.full.lstrip("/")) }}"
             title="{{ node.path.full }}"
             {% if node.path.full == path.full %}
-            class="px-2 py-1 bg-primary text-white"
+            class="px-2 py-1 bg-primary text-white text-decoration-none"
             {% endif %}
     >
         {{- node.path.name -}}
@@ -40,15 +40,6 @@
     </ul>
 {% endmacro %}
 
-{% macro render_dict(d) %}
-    <dl class="row">
-        {% for k in d %}
-            <dt class="col-sm-3 text-truncate">{{ k }}</dt>
-            <dd class="col-sm-9">{{ d[k] | tojson }}</dd>
-        {% endfor %}
-    </dl>
-{% endmacro %}
-
 <div class="container">
 
     <h1>Simple ZooKeeper Viewer</h1>
@@ -56,12 +47,12 @@
     <div class="row">
         <div>ZooKeeper hosts: <code>{{ zk_hosts }}</code></div>
 
-        <div class="col">
+        <div class="col-5">
             <h2>Tree View</h2>
             {{ tree_node_children([tree]) }}
         </div>
 
-        <div class="col">
+        <div class="col-7">
             <h2>Path</h2>
             <code>{{ path.full }}</code>
 
@@ -101,7 +92,13 @@
 
             <div>
                 <h2>Metadata</h2>
-                {{ render_dict(meta) }}
+                <dl class="row lh-1">
+                    {% for k in meta %}
+                        <dt class="col-sm-3 text-truncate">{{ k }}</dt>
+                        <dd class="col-sm-9">{{ meta[k] | tojson }}</dd>
+                    {% endfor %}
+                </dl>
+
             </div>
 
         </div>
