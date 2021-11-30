@@ -1,10 +1,10 @@
 import contextlib
-import json
 import logging
 import os
 import sys
+from typing import List, NamedTuple
 
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template
 from kazoo.client import KazooClient
 
 ZK_HOSTS_DEFAULT = "127.0.0.1:2181"
@@ -12,7 +12,6 @@ ZK_HOSTS_DEFAULT = "127.0.0.1:2181"
 log = logging.getLogger("simple-zookeeper-viewer")
 
 app = Flask(__name__)
-
 
 # Node metadata to view
 ZNODESTAT_ATTR = [
@@ -29,63 +28,90 @@ ZNODESTAT_ATTR = [
 
 @contextlib.contextmanager
 def get_zk():
-    zk = KazooClient(hosts=app.config["ZK_HOSTS"], read_only=True)
+    zk = KazooClient(hosts=app.config.get("ZK_HOSTS", ZK_HOSTS_DEFAULT), read_only=True)
     zk.start()
     yield zk
     zk.stop()
     zk.close()
 
 
-@app.route('/', defaults={'path': ''})
-@app.route('/zk/', defaults={'path': ''})
-@app.route('/zk/<path:path>')
-def view(path):
-    return render_template('zk.html', path=path, host=app.config["ZK_HOSTS"])
+class ZooPath:
+    """Wrapper for ZooKeeper paths and operations."""
 
-@app.route('/nodes/', defaults={'path': ''})
-@app.route('/nodes/<path:path>')
-def nodes(path):
-    ancestors = []
-    full_path = ''
-    ancestors.append({
-        'name': '/',
-        'full_path': '/'})
-    for ancestor in path.split('/'):
-        if ancestor != '':
-            full_path += '/' + ancestor
-            ancestors.append({
-                'name': ancestor,
-                'full_path': full_path})
+    def __init__(self, path: str):
+        self._parts = self._parse_path(path)
+
+    @staticmethod
+    def _parse_path(path: str) -> List[str]:
+        """Normalize a path and split in components"""
+        parts = path.strip("/").split("/")
+        if parts == [""]:
+            parts = ["/"]
+        else:
+            parts = ["/"] + parts
+        return parts
+
+    @staticmethod
+    def _join(parts: List[str]) -> str:
+        return parts[0] + "/".join(p for p in parts[1:])
+
+    @property
+    def name(self):
+        return self._parts[-1]
+
+    @property
+    def full(self):
+        return self._join(self._parts)
+
+    def __str__(self):
+        return self.full
+
+    def child(self, name: str) -> "ZooPath":
+        return ZooPath(self._join(self._parts + [name]))
+
+    def is_ancestor_of(self, path: "ZooPath"):
+        return self._parts == path._parts[:len(self._parts)]
+
+
+class ZooTree(NamedTuple):
+    path: ZooPath
+    children: List["ZooTree"]
+
+
+@app.route('/', defaults={'path': '/'})
+@app.route("/tree", defaults={"path": "/"})
+@app.route("/tree/", defaults={"path": "/"})
+@app.route("/tree/<path:path>")
+def tree(path):
+    """
+    Build tree around given path: ancestors,
+    siblings of ancestors and own children
+    """
+    path = ZooPath(path)
+
+    def get_tree(zk: KazooClient, path: ZooPath, follow: ZooPath) -> ZooTree:
+        child_names = zk.get_children(path.full)
+        child_paths = [path.child(c) for c in child_names]
+        if path.is_ancestor_of(follow):
+            children = [get_tree(zk=zk, path=p, follow=follow) for p in child_paths]
+        else:
+            children = []
+        return ZooTree(path=path, children=children)
+
     with get_zk() as zk:
-        children = sorted(zk.get_children(path))
-    return render_template('_nodes.html',
-        path=full_path + '/',
-        children=children,
-        ancestors=ancestors)
+        tree = get_tree(zk=zk, path=ZooPath("/"), follow=path)
+        raw, stat = zk.get(path.full)
+        meta = {k: getattr(stat, k) for k in ZNODESTAT_ATTR}
+        # TODO: add JSON parsed version
 
-@app.route('/data/', defaults={'path': ''})
-@app.route('/data/<path:path>')
-def data(path):
-    with get_zk() as zk:
-        node = zk.get(path)
-    meta = {}
-    for attr in ZNODESTAT_ATTR:
-        meta[attr] = getattr(node[1], attr)
-    if path.endswith('/'):
-        path = path[:-1]
-    data = parse_data(node[0])
-    return render_template('_data.html',
-        path='/' + path,
-        data=data,
-        is_dict=type(data) == dict,
-        meta=meta);
-
-def parse_data(raw_data):
-    try:
-        data = json.loads(raw_data)
-        return data
-    except:
-        return repr(raw_data)
+    return render_template(
+        'tree.html',
+        zk_hosts=app.config.get("ZK_HOSTS", ZK_HOSTS_DEFAULT),
+        path=path,
+        tree=tree,
+        raw=raw,
+        meta=meta
+    )
 
 
 if __name__ == '__main__':
@@ -102,5 +128,3 @@ if __name__ == '__main__':
     log.info(f"Using ZK_HOSTS={app.config['ZK_HOSTS']!r}")
 
     app.run(host=host, port=port, debug=True)
-
-
