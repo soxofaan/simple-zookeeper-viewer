@@ -1,14 +1,17 @@
 import json
+import logging
 import os
+import sys
+
 from flask import Flask, render_template, g, jsonify, request
 from kazoo.client import KazooClient
 
+ZK_HOSTS_DEFAULT = "127.0.0.1:2181"
+
+log = logging.getLogger("simple-zookeeper-viewer")
 
 app = Flask(__name__)
 
-# Host string of the ZooKeeper servers to connect to
-ZK_HOSTS_DEFAULT = "127.0.0.1:2181"
-ZK_HOSTS = os.environ.get("ZK_HOSTS", ZK_HOSTS_DEFAULT)
 
 # Node metadata to view
 ZNODESTAT_ATTR = [
@@ -25,7 +28,7 @@ ZNODESTAT_ATTR = [
 @app.before_request
 def before_request():
     if request.path.startswith('/nodes/') or request.path.startswith('/data/'):
-        g.zk = KazooClient(hosts=ZK_HOSTS, read_only=True)
+        g.zk = KazooClient(hosts=app.config["ZK_HOSTS"], read_only=True)
         g.zk.start()
 
 @app.teardown_request
@@ -38,7 +41,7 @@ def teardown_request(exception):
 @app.route('/zk/', defaults={'path': ''})
 @app.route('/zk/<path:path>')
 def view(path):
-    return render_template('zk.html', path=path, host=ZK_HOSTS)
+    return render_template('zk.html', path=path, host=app.config["ZK_HOSTS"])
 
 @app.route('/nodes/', defaults={'path': ''})
 @app.route('/nodes/<path:path>')
@@ -83,14 +86,19 @@ def parse_data(raw_data):
     except:
         return repr(raw_data)
 
+
 if __name__ == '__main__':
-    import sys
+    logging.basicConfig(level=logging.INFO)
     host = '127.0.0.1'
     port = 5000
     if len(sys.argv) > 1:
         host = sys.argv[1]
     if len(sys.argv) > 2:
         port = int(sys.argv[2])
+
+    app.config["ZK_HOSTS"] = os.environ.get("ZK_HOSTS", ZK_HOSTS_DEFAULT)
+
+    log.info(f"Using ZK_HOSTS={app.config['ZK_HOSTS']!r}")
 
     app.run(host=host, port=port, debug=True)
 
