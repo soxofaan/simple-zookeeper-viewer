@@ -1,9 +1,10 @@
+import contextlib
 import json
 import logging
 import os
 import sys
 
-from flask import Flask, render_template, g, jsonify, request
+from flask import Flask, render_template, jsonify, request
 from kazoo.client import KazooClient
 
 ZK_HOSTS_DEFAULT = "127.0.0.1:2181"
@@ -25,17 +26,15 @@ ZNODESTAT_ATTR = [
     'numChildren',
     'version']
 
-@app.before_request
-def before_request():
-    if request.path.startswith('/nodes/') or request.path.startswith('/data/'):
-        g.zk = KazooClient(hosts=app.config["ZK_HOSTS"], read_only=True)
-        g.zk.start()
 
-@app.teardown_request
-def teardown_request(exception):
-    if 'zk' in g:
-        g.zk.stop()
-        g.zk.close()
+@contextlib.contextmanager
+def get_zk():
+    zk = KazooClient(hosts=app.config["ZK_HOSTS"], read_only=True)
+    zk.start()
+    yield zk
+    zk.stop()
+    zk.close()
+
 
 @app.route('/', defaults={'path': ''})
 @app.route('/zk/', defaults={'path': ''})
@@ -57,7 +56,8 @@ def nodes(path):
             ancestors.append({
                 'name': ancestor,
                 'full_path': full_path})
-    children = sorted(g.zk.get_children(path))
+    with get_zk() as zk:
+        children = sorted(zk.get_children(path))
     return render_template('_nodes.html',
         path=full_path + '/',
         children=children,
@@ -66,7 +66,8 @@ def nodes(path):
 @app.route('/data/', defaults={'path': ''})
 @app.route('/data/<path:path>')
 def data(path):
-    node = g.zk.get(path)
+    with get_zk() as zk:
+        node = zk.get(path)
     meta = {}
     for attr in ZNODESTAT_ATTR:
         meta[attr] = getattr(node[1], attr)
