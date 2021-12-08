@@ -47,6 +47,10 @@
     <div class="row">
         <div>ZooKeeper hosts: <code>{{ zk_hosts }}</code></div>
 
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
         <div class="col-5">
             <h2>Tree View</h2>
             {{ tree_node_children([tree]) }}

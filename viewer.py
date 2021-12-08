@@ -5,6 +5,8 @@ import os
 import sys
 from typing import List, NamedTuple
 
+import flask
+import kazoo.exceptions
 from flask import Flask, render_template
 from kazoo.client import KazooClient
 
@@ -101,7 +103,10 @@ def tree(path):
 
     with get_zk() as zk:
         tree = get_tree(zk=zk, path=ZooPath("/"), follow=path)
-        raw, stat = zk.get(path.full)
+        try:
+            raw, stat = zk.get(path.full)
+        except kazoo.exceptions.NoNodeError:
+            return flask.redirect(flask.url_for("tree", path="/", error=f"No node {path.full!r}"))
         meta = {k: getattr(stat, k) for k in ZNODESTAT_ATTR}
         parsed = {"Raw": raw}
         default_format = "Raw"
@@ -118,6 +123,7 @@ def tree(path):
         tree=tree,
         parsed=parsed, default_format=default_format,
         meta=meta,
+        error=flask.request.args.get("error")
     )
 
 
