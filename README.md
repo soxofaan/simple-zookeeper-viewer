@@ -6,9 +6,9 @@ A simple ZooKeeper viewer. Enough said.
 
 Requires [kazoo](https://github.com/python-zk/kazoo) and [Flask](https://github.com/mitsuhiko/flask)
 
-Requirements can be installed via pip and the provided INSTALL file.
+Requirements can be installed via `pip` and the provided `requirements.txt` file.
 
-    $ pip install -r INSTALL
+    $ pip install -r requirements.txt
 
 #### Configuration
 
