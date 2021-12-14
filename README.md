@@ -1,29 +1,33 @@
-### simple-zookeeper-viewer
+# Simple Zookeeper Viewer
 
-A simple ZooKeeper viewer. Enough said.
+A simple ZooKeeper viewer web app. Enough said.
 
-#### Setup
+## Setup
 
-Requires [kazoo](https://github.com/python-zk/kazoo) and [Flask](https://github.com/pallets/flask)
+Requires a Python environment with [kazoo](https://github.com/python-zk/kazoo)
+and [Flask](https://github.com/pallets/flask). 
+For example, install these requirements via `pip` and the provided `requirements.txt` file:
 
-Requirements can be installed via `pip` and the provided `requirements.txt` file.
+    pip install -r requirements.txt
 
-    $ pip install -r requirements.txt
+## Configuration
 
-#### Configuration
-
-The default ZooKeeper host to connect to is `127.0.0.1:2181`.
-Override the hosts string through setting the environment variable `ZK_HOSTS`
-(or editing it in `viewer.py`)
+By default, the viewer visualizes the ZooKeeper service at `127.0.0.1:2181`. 
+Override this hosts string through setting the environment variable `ZK_HOSTS` (or editing it in `viewer.py`)
 before running the app.
 
-#### Usage
+## Usage
 
-To run simple-zookeeper-viewer, execute
+Launch the web app locally:
 
-    $ python viewer.py [host] [port]
+    python viewer.py
 
-Then navigate to http://localhost:5000/ to view the root of the ZooKeeper server.
+Go to http://127.0.0.1:5000/ to start at the root of the ZooKeeper service.
+Navigate the tree of ZooKeeper nodes on the left and inspect the corresponding data and metadata on the right.
 
-* Click on a node to view data and metadata on that node
-* Double click on a node to view that node and its children
+
+## Background
+
+This is friendly fork of the [original viewer by David Wen](https://github.com/davidwen/simple-zookeeper-viewer). 
+It further simplifies the project: same functionality but with fewer templates, 
+fewer view functions, less CSS, less JavaScript.

@@ -129,6 +129,8 @@ def tree(path):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
+
+    # TODO: improve command line interface: it's more likely that user wants to use another port than another host.
     host = '127.0.0.1'
     port = 5000
     if len(sys.argv) > 1:
