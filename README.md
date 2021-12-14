@@ -4,7 +4,7 @@ A simple ZooKeeper viewer. Enough said.
 
 #### Setup
 
-Requires [kazoo](https://github.com/python-zk/kazoo) and [Flask](https://github.com/mitsuhiko/flask)
+Requires [kazoo](https://github.com/python-zk/kazoo) and [Flask](https://github.com/pallets/flask)
 
 Requirements can be installed via `pip` and the provided `requirements.txt` file.
 
