@@ -10,21 +10,18 @@ For example, install these requirements via `pip` and the provided `requirements
 
     pip install -r requirements.txt
 
-## Configuration
-
-By default, the viewer visualizes the ZooKeeper service at `127.0.0.1:2181`. 
-Override this hosts string through setting the environment variable `ZK_HOSTS` (or editing it in `viewer.py`)
-before running the app.
 
 ## Usage
 
-Launch the web app locally:
+Launch the web app locally, providing the desired ZooKeeper hosts string 
+(`127.0.0.1:2181` by default), for example:
 
-    python viewer.py
+    python viewer.py zk01.example.com:2181,zk02.example.com:2181
 
 Go to http://127.0.0.1:5000/ to start at the root of the ZooKeeper service.
 Navigate the tree of ZooKeeper nodes on the left and inspect the corresponding data and metadata on the right.
 
+Optionally, tweak the viewer web app host/port with the options `--port`/`--host`.
 
 ## Background
 

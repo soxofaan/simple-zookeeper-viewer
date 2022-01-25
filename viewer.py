@@ -1,3 +1,4 @@
+import argparse
 import contextlib
 import json
 import logging
@@ -130,16 +131,23 @@ def tree(path):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
 
-    # TODO: improve command line interface: it's more likely that user wants to use another port than another host.
-    host = '127.0.0.1'
-    port = 5000
-    if len(sys.argv) > 1:
-        host = sys.argv[1]
-    if len(sys.argv) > 2:
-        port = int(sys.argv[2])
 
-    app.config["ZK_HOSTS"] = os.environ.get("ZK_HOSTS", ZK_HOSTS_DEFAULT)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--port", "-p", type=int, default=5000,
+        help="Port for the viewer web app to listen on.",
+        )
+    parser.add_argument(
+        "--host", default="127.0.0.1",
+        help="Host for the viewer web app.",
+        )
+    parser.add_argument(
+        "zk_hosts", nargs="?", default=os.environ.get("ZK_HOSTS", ZK_HOSTS_DEFAULT),
+        help="ZooKeeper hosts to connect to."
+        )
+    args = parser.parse_args()
 
+    app.config["ZK_HOSTS"] = args.zk_hosts
     log.info(f"Using ZK_HOSTS={app.config['ZK_HOSTS']!r}")
 
-    app.run(host=host, port=port, debug=True)
+    app.run(host=args.host, port=args.port, debug=True)
