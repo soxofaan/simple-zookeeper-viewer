@@ -21,6 +21,7 @@
             title="{{ node.path.full }}"
             {% if node.path.full == path.full %}
             class="px-2 py-1 bg-primary text-white text-decoration-none"
+            id="current-node"
             {% endif %}
     >
         {{- node.path.name -}}
@@ -53,7 +54,19 @@
 
         <div class="col-5">
             <h2>Tree View</h2>
-            {{ tree_node_children([tree]) }}
+            <div id="tree" class="border overflow-scroll" style="max-height: 80vh;">
+                {{ tree_node_children([tree]) }}
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', function(event) {
+                    // Scroll tree to avoid that current node is below the fold.
+                    var tree = document.getElementById("tree");
+                    var current = document.getElementById("current-node");
+                    tree.scrollTop = current.getBoundingClientRect().top - tree.getBoundingClientRect().top - 200;
+                });
+            </script>
+
         </div>
 
         <div class="col-7">
