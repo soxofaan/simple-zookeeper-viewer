@@ -25,6 +25,6 @@ Optionally, tweak the viewer web app host/port with the options `--port`/`--host
 
 ## Background
 
-This is friendly fork of the [original viewer by David Wen](https://github.com/davidwen/simple-zookeeper-viewer). 
+This is a friendly fork of the [original viewer by David Wen](https://github.com/davidwen/simple-zookeeper-viewer). 
 It further simplifies the project: same functionality but with fewer templates, 
-fewer view functions, less CSS, less JavaScript.
+fewer view functions, no custom CSS, no custom JavaScript.
