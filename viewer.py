@@ -93,9 +93,9 @@ def tree(path):
     path = ZooPath(path)
 
     def get_tree(zk: KazooClient, path: ZooPath, follow: ZooPath) -> ZooTree:
-        child_names = sorted(zk.get_children(path.full))
-        child_paths = [path.child(c) for c in child_names]
         if path.is_ancestor_of(follow):
+            child_names = sorted(zk.get_children(path.full))
+            child_paths = [path.child(c) for c in child_names]
             children = [get_tree(zk=zk, path=p, follow=follow) for p in child_paths]
         else:
             children = []
