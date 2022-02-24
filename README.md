@@ -23,6 +23,10 @@ Navigate the tree of ZooKeeper nodes on the left and inspect the corresponding d
 
 Optionally, tweak the viewer web app host/port with the options `--port`/`--host`.
 
+If you run the viewer locally (e.g. on `127.0.0.1`), you can automatically open it
+in a web browser tab by adding the option `--open-viewer`.
+
+
 ## Background
 
 This is a friendly fork of the [original viewer by David Wen](https://github.com/davidwen/simple-zookeeper-viewer). 

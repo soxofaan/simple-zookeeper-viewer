@@ -3,7 +3,8 @@ import contextlib
 import json
 import logging
 import os
-import sys
+import threading
+import webbrowser
 from typing import List, NamedTuple
 
 import flask
@@ -128,9 +129,16 @@ def tree(path):
     )
 
 
+def open_in_web_browser_delayed(url: str, delay: int = 1):
+    def open_url():
+        log.info(f"Opening {url!r} in web browser...")
+        webbrowser.open_new_tab(url)
+
+    threading.Timer(delay, open_url).start()
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -145,9 +153,16 @@ if __name__ == '__main__':
         "zk_hosts", nargs="?", default=os.environ.get("ZK_HOSTS", ZK_HOSTS_DEFAULT),
         help="ZooKeeper hosts to connect to."
         )
+    parser.add_argument(
+        "-b", "--open-viewer", action="store_true", default=False,
+        help="Automatically open the viewer in a new web browser window/tab"
+    )
     args = parser.parse_args()
 
     app.config["ZK_HOSTS"] = args.zk_hosts
     log.info(f"Using ZK_HOSTS={app.config['ZK_HOSTS']!r}")
 
-    app.run(host=args.host, port=args.port, debug=True)
+    if args.open_viewer:
+        open_in_web_browser_delayed(url=f"http://{args.host}:{args.port}/")
+
+    app.run(host=args.host, port=args.port)
