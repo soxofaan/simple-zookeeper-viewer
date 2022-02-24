@@ -76,7 +76,7 @@ class ZooPath:
         return ZooPath(self._join(self._parts + [name]))
 
     def is_ancestor_of(self, path: "ZooPath"):
-        return self._parts == path._parts[:len(self._parts)]
+        return self._parts == path._parts[0 : len(self._parts)]
 
 
 class ZooTree(NamedTuple):
