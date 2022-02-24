@@ -20,15 +20,16 @@ app = Flask(__name__)
 
 # Node metadata to view
 ZNODESTAT_ATTR = [
-    'aversion',
-    'ctime',
-    'czxid',
-    'dataLength',
-    'ephemeralOwner',
-    'mtime',
-    'mzxid',
-    'numChildren',
-    'version']
+    "aversion",
+    "ctime",
+    "czxid",
+    "dataLength",
+    "ephemeralOwner",
+    "mtime",
+    "mzxid",
+    "numChildren",
+    "version",
+]
 
 
 @contextlib.contextmanager
@@ -83,7 +84,7 @@ class ZooTree(NamedTuple):
     children: List["ZooTree"]
 
 
-@app.route('/', defaults={'path': '/'})
+@app.route("/", defaults={"path": "/"})
 @app.route("/tree", defaults={"path": "/"})
 @app.route("/tree/", defaults={"path": "/"})
 @app.route("/tree/<path:path>")
@@ -108,7 +109,9 @@ def tree(path):
         try:
             raw, stat = zk.get(path.full)
         except kazoo.exceptions.NoNodeError:
-            return flask.redirect(flask.url_for("tree", path="/", error=f"No node {path.full!r}"))
+            return flask.redirect(
+                flask.url_for("tree", path="/", error=f"No node {path.full!r}")
+            )
         meta = {k: getattr(stat, k) for k in ZNODESTAT_ATTR}
         parsed = {"Raw": raw}
         default_format = "Raw"
@@ -119,13 +122,14 @@ def tree(path):
             pass
 
     return render_template(
-        'tree.html',
+        "tree.html",
         zk_hosts=app.config.get("ZK_HOSTS", ZK_HOSTS_DEFAULT),
         path=path,
         tree=tree,
-        parsed=parsed, default_format=default_format,
+        parsed=parsed,
+        default_format=default_format,
         meta=meta,
-        error=flask.request.args.get("error")
+        error=flask.request.args.get("error"),
     )
 
 
@@ -137,25 +141,34 @@ def open_in_web_browser_delayed(url: str, delay: int = 1):
     threading.Timer(delay, open_url).start()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--port", "-p", type=int, default=5000,
+        "--port",
+        "-p",
+        type=int,
+        default=5000,
         help="Port for the viewer web app to listen on.",
-        )
+    )
     parser.add_argument(
-        "--host", default="127.0.0.1",
+        "--host",
+        default="127.0.0.1",
         help="Host for the viewer web app.",
-        )
+    )
     parser.add_argument(
-        "zk_hosts", nargs="?", default=os.environ.get("ZK_HOSTS", ZK_HOSTS_DEFAULT),
-        help="ZooKeeper hosts to connect to."
-        )
+        "zk_hosts",
+        nargs="?",
+        default=os.environ.get("ZK_HOSTS", ZK_HOSTS_DEFAULT),
+        help="ZooKeeper hosts to connect to.",
+    )
     parser.add_argument(
-        "-b", "--open-viewer", action="store_true", default=False,
-        help="Automatically open the viewer in a new web browser window/tab"
+        "-b",
+        "--open-viewer",
+        action="store_true",
+        default=False,
+        help="Automatically open the viewer in a new web browser window/tab",
     )
     args = parser.parse_args()
 
