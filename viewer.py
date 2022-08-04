@@ -97,29 +97,41 @@ def tree(path):
 
     def get_tree(zk: KazooClient, path: ZooPath, follow: ZooPath) -> ZooTree:
         if path.is_ancestor_of(follow):
-            child_names = sorted(zk.get_children(path.full))
-            child_paths = [path.child(c) for c in child_names]
-            children = [get_tree(zk=zk, path=p, follow=follow) for p in child_paths]
+            try:
+                child_names = sorted(zk.get_children(path.full))
+            except kazoo.exceptions.NoAuthError:
+                # TODO: indication that empty list is due to auth issue
+                children = []
+            else:
+                child_paths = [path.child(c) for c in child_names]
+                children = [get_tree(zk=zk, path=p, follow=follow) for p in child_paths]
         else:
             children = []
         return ZooTree(path=path, children=children)
 
     with get_zk() as zk:
         tree = get_tree(zk=zk, path=ZooPath("/"), follow=path)
+        parsed = {}
+        default_format = None
+
         try:
             raw, stat = zk.get(path.full)
         except kazoo.exceptions.NoNodeError:
             return flask.redirect(
                 flask.url_for("tree", path="/", error=f"No node {path.full!r}")
             )
-        meta = {k: getattr(stat, k) for k in ZNODESTAT_ATTR}
-        parsed = {"Raw": raw}
-        default_format = "Raw"
-        try:
-            parsed["JSON"] = json.dumps(json.loads(raw), indent=2)
-            default_format = "JSON"
-        except json.JSONDecodeError:
-            pass
+        except kazoo.exceptions.NoAuthError as e:
+            meta = {"error": repr(e)}
+        else:
+            meta = {k: getattr(stat, k) for k in ZNODESTAT_ATTR}
+            if raw is not None:
+                parsed = {"Raw": raw}
+                default_format = "Raw"
+                try:
+                    parsed["JSON"] = json.dumps(json.loads(raw), indent=2)
+                    default_format = "JSON"
+                except json.JSONDecodeError:
+                    pass
 
     return render_template(
         "tree.html",

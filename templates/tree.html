@@ -102,8 +102,10 @@
                             {% endfor %}
                         </div>
                     </div>
+                {% elif parsed | count == 1 %}
+                    <pre class="p-2" style="background-color: #eef;">{{ parsed.popitem()[1] }}</pre>
                 {% else %}
-                    <pre class="p-2" style="background-color: #eef;">{{ parsed[default_format] }}</pre>
+                    No data
                 {% endif %}
             </div>
 
