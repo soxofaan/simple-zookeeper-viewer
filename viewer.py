@@ -130,7 +130,7 @@ def tree(path):
                 try:
                     parsed["JSON"] = json.dumps(json.loads(raw), indent=2)
                     default_format = "JSON"
-                except json.JSONDecodeError:
+                except (json.JSONDecodeError, UnicodeDecodeError):
                     pass
 
     return render_template(
